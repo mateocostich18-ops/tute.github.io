@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TUTE</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Courier+Prime:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --black: #08090c;
+      --blue: #00C8FF;
+      --white: #eef3f7;
+      --dim: #1c2026;
+      --muted: #3a4550;
+      --border: #131820;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      overflow-x: hidden;
+    }
+
+    /* ── LOCK ── */
+    #lock {
+      position: fixed; inset: 0; z-index: 999;
+      background: #000;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: space-between;
+      padding: 64px 0 72px;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    #lock.gone {
+      opacity: 0; transform: translateY(-20px); pointer-events: none;
+    }
+
+    .lock-time {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 80px; font-weight: 200;
+      color: #fff; letter-spacing: -4px; text-align: center; line-height: 1;
+    }
+    .lock-date {
+      font-size: 13px; font-weight: 300;
+      color: rgba(255,255,255,0.4);
+      letter-spacing: 1px; text-align: center; margin-top: 8px;
+    }
+
+    .lock-art {
+      width: 164px; height: 164px;
+      border-radius: 22px; overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(0,200,255,0.15), 0 16px 48px rgba(0,0,0,0.8);
+    }
+    .lock-art img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+    .lock-info { text-align: center; }
+    .lock-info h2 {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 26px; letter-spacing: 8px; color: #fff;
+    }
+    .lock-info p {
+      font-family: 'Courier Prime', monospace;
+      font-size: 9px; color: rgba(255,255,255,0.25);
+      letter-spacing: 3px; margin-top: 5px;
+    }
+
+    .slide-wrap {
+      width: 264px; height: 50px;
+      background: rgba(255,255,255,0.05);
+      border-radius: 25px;
+      border: 1px solid rgba(255,255,255,0.08);
+      position: relative; overflow: hidden;
+      user-select: none; touch-action: none;
+    }
+    .slide-label {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 300;
+      color: rgba(255,255,255,0.28); letter-spacing: 3px;
+      pointer-events: none; transition: opacity 0.1s;
+    }
+    .slide-knob {
+      position: absolute; left: 4px; top: 4px;
+      width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(145deg, #e0e0e0, #909090);
+      box-shadow: 0 2px 10px rgba(0,0,0,0.8), inset 0 1px 1px rgba(255,255,255,0.5);
+      display: flex; align-items: center; justify-content: center;
+      cursor: grab; z-index: 2;
+    }
+    .slide-knob svg {
+      width: 16px; height: 16px;
+      fill: none; stroke: #555;
+      stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+    }
+    .slide-shimmer {
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(0,200,255,0.06), transparent);
+      transform: translateX(-100%);
+      animation: shimmer 2.6s infinite; pointer-events: none;
+    }
+    @keyframes shimmer { 0%{transform:translateX(-100%)} 55%,100%{transform:translateX(200%)} }
+
+    /* ── MAIN ── */
+    #main { opacity: 0; transition: opacity 0.5s ease 0.1s; }
+    #main.on { opacity: 1; }
+
+    nav {
+      position: sticky; top: 0; z-index: 50;
+      padding: 16px 20px;
+      background: rgba(8,9,12,0.95);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(12px);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .nav-l { }
+    .nav-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 20px; letter-spacing: 6px; color: var(--white);
+    }
+    .nav-loc {
+      font-family: 'Courier Prime', monospace;
+      font-size: 8px; color: var(--muted);
+      letter-spacing: 2px; margin-top: 1px;
+    }
+    .nav-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--blue);
+      box-shadow: 0 0 8px var(--blue);
+    }
+
+    /* hero */
+    .hero-img {
+      width: 100%; aspect-ratio: 1;
+      overflow: hidden; position: relative; background: #0c0e14;
+    }
+    .hero-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .hero-img::after {
+      content: '';
+      position: absolute; bottom: 0; left: 0; right: 0; height: 50%;
+      background: linear-gradient(to top, var(--black), transparent);
+    }
+
+    .hero-text {
+      padding: 22px 20px 32px;
+      border-bottom: 1px solid var(--border);
+    }
+    .hero-tag {
+      font-family: 'Courier Prime', monospace;
+      font-size: 9px; letter-spacing: 3px; color: var(--muted);
+      margin-bottom: 10px;
+    }
+    .hero-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(76px, 21vw, 124px);
+      line-height: 0.85; letter-spacing: -2px; margin-bottom: 8px;
+    }
+    .hero-ep {
+      font-family: 'Courier Prime', monospace;
+      font-size: 9px; letter-spacing: 3px; color: var(--blue);
+      margin-bottom: 24px; opacity: 0.7;
+    }
+
+    .btn-fill {
+      display: inline-block;
+      background: var(--blue); color: #000;
+      font-family: 'Courier Prime', monospace;
+      font-size: 10px; font-weight: 700; letter-spacing: 2px;
+      padding: 12px 20px; text-decoration: none;
+      margin-right: 10px; margin-bottom: 10px;
+    }
+    .btn-ghost {
+      display: inline-block;
+      border: 1px solid var(--dim); color: var(--muted);
+      font-family: 'Courier Prime', monospace;
+      font-size: 10px; letter-spacing: 2px;
+      padding: 11px 20px; text-decoration: none; margin-bottom: 10px;
+    }
+
+    /* sections */
+    section { border-top: 1px solid var(--border); }
+
+    .s-head {
+      padding: 20px 20px 14px;
+      display: flex; align-items: baseline; gap: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+    .s-num {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 40px; line-height: 1; color: var(--blue); opacity: 0.4;
+    }
+    .s-tot {
+      font-family: 'Courier Prime', monospace;
+      font-size: 10px; color: var(--muted);
+    }
+    .s-title {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 22px; letter-spacing: 4px;
+    }
+
+    /* tracks */
+    .tracks { padding: 0 20px; }
+    .t-group {
+      font-family: 'Courier Prime', monospace;
+      font-size: 9px; letter-spacing: 2px; color: var(--muted);
+      padding: 14px 0 10px; border-bottom: 1px solid var(--border);
+    }
+    .t-row {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 0; border-bottom: 1px solid var(--border);
+    }
+    .t-code {
+      font-family: 'Courier Prime', monospace;
+      font-size: 10px; color: var(--muted); min-width: 22px;
+    }
+    .t-info { flex: 1; }
+    .t-name { font-size: 14px; font-weight: 500; }
+    .t-sub {
+      font-family: 'Courier Prime', monospace;
+      font-size: 9px; color: var(--muted); margin-top: 2px; letter-spacing: 1px;
+    }
+    .t-play {
+      width: 30px; height: 30px;
+      border: 1px solid var(--dim); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0; cursor: pointer; transition: border-color 0.2s;
+    }
+    .t-play:hover { border-color: var(--blue); }
+    .t-play svg { width: 9px; height: 9px; fill: var(--blue); margin-left: 2px; opacity: 0.6; }
+
+    /* labs */
+    .labs-intro {
+      padding: 20px; border-bottom: 1px solid var(--border);
+    }
+    .labs-name {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 48px; letter-spacing: 8px; line-height: 1;
+    }
+    .labs-desc {
+      font-family: 'Courier Prime', monospace;
+      font-size: 9px; letter-spacing: 2px; color: var(--muted); margin-top: 6px;
+    }
+
+    .product { border-bottom: 1px solid var(--border); }
+    .product-img {
+      width: 100%; aspect-ratio: 3/2;
+      overflow: hidden; background: var(--dim);
+      position: relative;
+    }
+    .product-img img {
+      width: 100%; height: 100%; object-fit: cover; display: block;
+      transition: transform 0.4s ease;
+    }
+    .product-img:hover img { transform: scale(1.02); }
+
+    .product-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 14px 20px;
+    }
+    .product-name { font-size: 14px; font-weight: 500; }
+    .product-cap {
+      font-family: 'Courier Prime', monospace;
+      font-size: 9px; color: var(--muted); margin-top: 2px; letter-spacing: 1px;
+    }
+    .product-price {
+      font-family: 'Courier Prime', monospace;
+      font-size: 13px; color: var(--blue); opacity: 0.8;
+    }
+
+    .labs-cta { padding: 20px; display: flex; gap: 10px; flex-wrap: wrap; }
+
+    /* contact */
+    .contact-body { padding: 28px 20px 40px; }
+    .contact-big {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: clamp(48px, 13vw, 72px);
+      line-height: 0.9; margin-bottom: 28px; color: var(--dim);
+    }
+    .contact-big span { color: var(--white); }
+    .c-row {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 18px 0; border-top: 1px solid var(--border);
+      text-decoration: none; color: var(--muted);
+      font-family: 'Courier Prime', monospace;
+      font-size: 11px; letter-spacing: 3px;
+      transition: color 0.2s;
+    }
+    .c-row:hover { color: var(--blue); }
+
+    footer {
+      padding: 18px 20px; border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .f-logo {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 13px; letter-spacing: 4px; color: var(--muted);
+    }
+    .f-copy {
+      font-family: 'Courier Prime', monospace;
+      font-size: 9px; color: var(--dim); letter-spacing: 2px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- LOCK -->
+<div id="lock">
+  <div>
+    <div class="lock-time" id="lTime">00:00</div>
+    <div class="lock-date" id="lDate"></div>
+  </div>
+
+  <div class="lock-art">
+    <img src="cover-ep.png" alt="Mística de Invierno">
+  </div>
+
+  <div class="lock-info">
+    <h2>TUTE</h2>
+    <p>MÍSTICA DE INVIERNO · EP</p>
+  </div>
+
+  <div class="slide-wrap" id="sw">
+    <div class="slide-shimmer"></div>
+    <div class="slide-label" id="sl">slide to unlock</div>
+    <div class="slide-knob" id="sk">
+      <svg viewBox="0 0 24 24"><polyline points="9 18 15 12 9 6"/></svg>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div id="main">
+
+  <nav>
+    <div class="nav-l">
+      <div class="nav-name">TUTE</div>
+      <div class="nav-loc">MZA · ARG</div>
+    </div>
+    <div class="nav-dot"></div>
+  </nav>
+
+  <div class="hero-img">
+    <img src="cover-ep.png" alt="Mística de Invierno">
+  </div>
+
+  <div class="hero-text">
+    <div class="hero-tag">00 / INTRO</div>
+    <h1 class="hero-name">TUTE</h1>
+    <div class="hero-ep">· MÍSTICA DE INVIERNO · EP · 2025 ·</div>
+    <a href="#musica" class="btn-fill">▶ ESCUCHAR</a>
+    <a href="#labs" class="btn-ghost">LABS ↗</a>
+  </div>
+
+  <section id="musica">
+    <div class="s-head">
+      <span class="s-num">01</span>
+      <span class="s-tot">/02</span>
+      <span class="s-title">MÚSICA</span>
+    </div>
+    <div class="tracks">
+      <div class="t-group">EP · MÍSTICA DE INVIERNO · 4 TRACKS</div>
+      <div class="t-row">
+        <span class="t-code">A1</span>
+        <div class="t-info"><div class="t-name">TEMA 01</div><div class="t-sub">PRÓXIMAMENTE</div></div>
+        <div class="t-play"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+      </div>
+      <div class="t-row">
+        <span class="t-code">A2</span>
+        <div class="t-info"><div class="t-name">TEMA 02</div><div class="t-sub">PRÓXIMAMENTE</div></div>
+        <div class="t-play"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+      </div>
+      <div class="t-row">
+        <span class="t-code">A3</span>
+        <div class="t-info"><div class="t-name">TEMA 03</div><div class="t-sub">PRÓXIMAMENTE</div></div>
+        <div class="t-play"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+      </div>
+      <div class="t-row">
+        <span class="t-code">A4</span>
+        <div class="t-info"><div class="t-name">TEMA 04</div><div class="t-sub">PRÓXIMAMENTE</div></div>
+        <div class="t-play"><svg viewBox="0 0 10 10"><polygon points="2,1 9,5 2,9"/></svg></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="labs">
+    <div class="s-head">
+      <span class="s-num">02</span>
+      <span class="s-tot">/02</span>
+      <span class="s-title">LABS</span>
+    </div>
+    <div class="labs-intro">
+      <div class="labs-name">LABS</div>
+      <div class="labs-desc">LOCKED-IN ALWAYS BUILDING SYSTEMS · CAP.01 · MZA</div>
+    </div>
+
+    <div class="product">
+      <div class="product-img"><img src="remera-negra.png" alt="Remera Negra"></div>
+      <div class="product-row">
+        <div><div class="product-name">Remera Negra</div><div class="product-cap">CAP.01 · LIMITADO</div></div>
+        <div class="product-price">$XX.000</div>
+      </div>
+    </div>
+
+    <div class="product">
+      <div class="product-img"><img src="remera-blanca.png" alt="Remera Blanca"></div>
+      <div class="product-row">
+        <div><div class="product-name">Remera Blanca</div><div class="product-cap">CAP.01 · LIMITADO</div></div>
+        <div class="product-price">$XX.000</div>
+      </div>
+    </div>
+
+    <div class="product">
+      <div class="product-img"><img src="gorro.png" alt="Gorro"></div>
+      <div class="product-row">
+        <div><div class="product-name">Gorro</div><div class="product-cap">CAP.01 · LIMITADO</div></div>
+        <div class="product-price">$XX.000</div>
+      </div>
+    </div>
+
+    <div class="labs-cta">
+      <a href="#contacto" class="btn-fill">COMPRAR ↗</a>
+      <a href="https://instagram.com" class="btn-ghost">INSTAGRAM ↗</a>
+    </div>
+  </section>
+
+  <section id="contacto">
+    <div class="contact-body">
+      <div class="contact-big"><span>CON</span>TACTO</div>
+      <a href="https://instagram.com" class="c-row"><span>INSTAGRAM</span><span>↗</span></a>
+      <a href="https://tiktok.com" class="c-row"><span>TIKTOK</span><span>↗</span></a>
+      <a href="https://open.spotify.com" class="c-row"><span>SPOTIFY</span><span>↗</span></a>
+      <a href="mailto:tute@labs.com" class="c-row"><span>EMAIL</span><span>↗</span></a>
+    </div>
+  </section>
+
+  <footer>
+    <div class="f-logo">TUTE · LABS</div>
+    <div class="f-copy">MZA · ARG · 2025</div>
+  </footer>
+</div>
+
+<script>
+  function tick() {
+    const n = new Date();
+    document.getElementById('lTime').textContent =
+      String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+    const days=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
+    const months=['enero','febrero','marzo','abril','mayo','junio','julio','agosto','septiembre','octubre','noviembre','diciembre'];
+    document.getElementById('lDate').textContent =
+      days[n.getDay()]+', '+n.getDate()+' de '+months[n.getMonth()];
+  }
+  tick(); setInterval(tick,1000);
+
+  const sw=document.getElementById('sw'),sk=document.getElementById('sk'),sl=document.getElementById('sl');
+  const lock=document.getElementById('lock'),main=document.getElementById('main');
+  let drag=false,sx=0,cx=0;
+  const mx=()=>sw.offsetWidth-sk.offsetWidth-8;
+
+  sk.addEventListener('mousedown',e=>{drag=true;sx=e.clientX-cx;});
+  sk.addEventListener('touchstart',e=>{drag=true;sx=e.touches[0].clientX-cx;},{passive:true});
+
+  window.addEventListener('mousemove',e=>{
+    if(!drag)return;
+    cx=Math.max(0,Math.min(e.clientX-sx,mx()));
+    sk.style.left=(cx+4)+'px';
+    sl.style.opacity=Math.max(0,1-(cx/mx())*2);
+    if(cx>=mx()*0.88)unlock();
+  });
+  window.addEventListener('touchmove',e=>{
+    if(!drag)return;
+    cx=Math.max(0,Math.min(e.touches[0].clientX-sx,mx()));
+    sk.style.left=(cx+4)+'px';
+    sl.style.opacity=Math.max(0,1-(cx/mx())*2);
+    if(cx>=mx()*0.88)unlock();
+  },{passive:true});
+
+  window.addEventListener('mouseup',reset);
+  window.addEventListener('touchend',reset);
+
+  function reset(){
+    if(!drag)return; drag=false;
+    if(cx<mx()*0.88){
+      sk.style.transition='left 0.25s ease';
+      sk.style.left='4px'; cx=0; sl.style.opacity=1;
+      setTimeout(()=>sk.style.transition='',300);
+    }
+  }
+  function unlock(){
+    drag=false; sk.style.left=(mx()+4)+'px';
+    setTimeout(()=>{
+      lock.classList.add('gone');
+      main.classList.add('on');
+      setTimeout(()=>lock.style.display='none',600);
+    },100);
+  }
+</script>
+</body>
+</html>
